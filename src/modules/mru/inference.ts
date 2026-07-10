@@ -1,6 +1,7 @@
-import type { MRUResult, MRUDiagramModel } from './types.ts';
+import type { MRUResult, MRUDiagramModel, ShowValuesFlags } from './types.ts';
 
-export function inferMRU(result: MRUResult): MRUDiagramModel {
+export function inferMRU(result: MRUResult & { showValues?: ShowValuesFlags }): MRUDiagramModel {
+  const showValues = result.showValues ?? { xi: true, xf: true, v: true, t: true, dx: true };
   let direction: 'left' | 'right' | 'none';
   let characterOrientation: 'left' | 'right' | 'none';
   let showVelocityVector: boolean;
@@ -35,5 +36,10 @@ export function inferMRU(result: MRUResult): MRUDiagramModel {
     v: result.v,
     t: result.t,
     dx: result.dx,
+    x0Unit: result.x0Unit,
+    xfUnit: result.xfUnit,
+    timeUnit: result.timeUnit,
+    velUnit: result.velUnit,
+    showValues,
   };
 }

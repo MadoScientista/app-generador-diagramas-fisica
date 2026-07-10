@@ -1,9 +1,9 @@
 import type { PhysicsModule, ValidationResult, PhysicsResult, DiagramModel, SceneGraph } from '../../core/types.ts';
 import { validateMRU } from './validation.ts';
-import { solveMRU } from './physics.ts';
+import { resolveMRU } from './physics.ts';
 import { inferMRU } from './inference.ts';
 import { buildMRUScene } from './scene-builder.ts';
-import type { MRUInput, MRUResult, MRUDiagramModel } from './types.ts';
+import type { MRUResult, MRUDiagramModel } from './types.ts';
 
 export const MRUModule: PhysicsModule = {
   info: {
@@ -15,7 +15,19 @@ export const MRUModule: PhysicsModule = {
     return validateMRU(input);
   },
   solve(input: Record<string, number>): PhysicsResult {
-    return solveMRU(input as unknown as MRUInput) as unknown as PhysicsResult;
+    const x0 = input['x0'];
+    const v = input['v'];
+    const t = input['t'];
+    const result = resolveMRU({
+      x0,
+      v,
+      t,
+      x0Unit: 'm',
+      xfUnit: 'm',
+      timeUnit: 's',
+      velUnit: 'm/s',
+    });
+    return result as unknown as PhysicsResult;
   },
   infer(result: PhysicsResult): DiagramModel {
     return inferMRU(result as unknown as MRUResult) as unknown as DiagramModel;

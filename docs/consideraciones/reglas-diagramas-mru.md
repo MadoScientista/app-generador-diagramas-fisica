@@ -17,6 +17,33 @@ Todo diagrama MRU contiene:
 - **Flecha de desplazamiento (Δx)**: eje secundario debajo del principal, desde $x_i$ hasta $x_f$
 - **Etiquetas**: $x = 0$, $x_i$, $x_f$, $v$, $t$, $\Delta x$
 
+### 1.1 Inputs del usuario
+
+| Input | Descripción | Unidad por defecto |
+|-------|-------------|--------------------|
+| $x_i$ | Posición inicial | m |
+| $v$ | Velocidad | m/s |
+| $t$ | Tiempo | s |
+| $x_f$ | Posición final (opcional para cálculo, siempre visible en UI) | m |
+| Unidad de $x_i$ | Selector: m o km (independiente de $x_f$) | m |
+| Unidad de $x_f$ | Selector: m o km (independiente de $x_i$) | m |
+| Unidad de tiempo | Selector: s, min, h | s |
+| Unidad de velocidad | Selector: m/s o km/h | m/s |
+
+### 1.2 Toggles de visibilidad de etiquetas
+
+Cada magnitud tiene un toggle independiente que controla si se muestra su valor en el diagrama:
+
+| Magnitud | Label sin valor | Label con valor |
+|----------|----------------|-----------------|
+| $x_i$ | `xi` | `xi = 20 m` |
+| $x_f$ | `xf` | `xf = 50 m` |
+| $v$ | `v` | `v = 3 m/s` |
+| $t$ | `t` | `t = 10 s` |
+| $\Delta x$ | `Δx` | `Δx = 30 m` |
+
+Cuando un toggle está desactivado, la etiqueta muestra solo el identificador (sin valor ni unidad). Cuando está activado, muestra el formato completo.
+
 ---
 
 ## 2. Posiciones
@@ -50,10 +77,12 @@ El origen NO está fijo en el centro. Se reubica según el rango de datos:
 
 ### 2.4 Diagrama base (sin inputs)
 
-Cuando no hay inputs o faltan inputs, se renderiza solo:
+Cuando hay menos de 3 campos numéricos llenos, o no se ha proporcionado $x_i$, se renderiza solo:
 - Eje X principal
 - Origen con etiqueta $x = 0$
 - Caja centrada en el origen, sin orientación (mirada neutra)
+
+$3$ campos no es suficiente si $x_i$ está vacío: $x_i$ siempre debe estar presente para resolver.
 
 ---
 
@@ -90,10 +119,10 @@ Todas las etiquetas excepto $x = 0$ llevan el formato:
 {identificador} = {valor} {unidad}
 ```
 
-Unidades actuales (SI): `m` para posiciones/desplazamiento, `m/s` para velocidad, `s` para tiempo.
+Donde `{unidad}` depende de los selects de unidad elegidos por el usuario.
 
-| Texto | Ejemplo | Posición |
-|-------|---------|----------|
+| Texto | Ejemplo (SI) | Posición |
+|-------|-------------|----------|
 | $x = 0$ | `x = 0` | Debajo del tick del origen |
 | $x_i$ | `xi = 20 m` | **Sobre el cuadrado** cuando $x_i$ está cerca del origen (distancia en pantalla < 50px); debajo del tick en caso contrario |
 | $x_f$ | `xf = 50 m` | Debajo del tick de $x_f$ |
@@ -107,6 +136,28 @@ Unidades actuales (SI): `m` para posiciones/desplazamiento, `m/s` para velocidad
 - La posición inicial se etiqueta como **xi**, no como x₀
 - La posición final se etiqueta como **xf**
 - $x = 0$ es la única etiqueta que no lleva valor ni unidad
+
+### 5.3 Control de visibilidad
+
+Cada magnitud tiene un toggle en la UI que controla si se muestra el valor en la etiqueta:
+
+- **Toggle activado**: `xi = 20 m`, `xf = 50 m`, `v = 3 m/s`, `t = 10 s`, `Δx = 30 m`
+- **Toggle desactivado**: `xi`, `xf`, `v`, `t`, `Δx` (solo identificador, sin valor ni unidad)
+
+El toggle no afecta la existencia del elemento en el diagrama, solo el contenido del texto de la etiqueta.
+
+### 5.4 Formato decimal
+
+Todos los valores numéricos en las etiquetas se formatean con:
+
+- Precisión de 3 decimales en cálculos internos
+- Si el valor redondeado no tiene parte decimal (ej. `5.000`), se muestra como entero: `5`
+- Si tiene decimales significativos, se muestran hasta 3: `5.123`, `0.5`, `3.1`
+
+Notas sobre unidades:
+- $x_i$ usa su propio selector de unidad (`x0Unit`)
+- $x_f$ usa su propio selector de unidad (`xfUnit`)
+- $\Delta x$ usa la unidad de $x_i$ (`x0Unit`)
 
 ---
 
@@ -150,17 +201,46 @@ Unidades actuales (SI): `m` para posiciones/desplazamiento, `m/s` para velocidad
 - $x_f = x_i$ (no hay desplazamiento)
 - Mismo tratamiento que $v = 0$ (sin vector, sin flecha de desplazamiento, sin etiqueta $\Delta x$, sin etiqueta $v$)
 
+### 7.5 Validación de consistencia
+
+Cuando el usuario ingresa manualmente los 4 campos ($x_i$, $v$, $t$, $x_f$), se verifica que cumplan la ecuación MRU:
+
+$$x_f \approx x_i + v \cdot t$$
+
+Tolerancia: $|x_f - (x_i + v \cdot t)| \leq 0.001$ (en unidades SI después de conversión).
+
+Si no se cumple, se muestra un error indicando que los valores no son físicamente posibles.
+
 ---
 
-## 8. Convenciones físicas
+## 8. Convenciones físicas y unidades
+
+### 8.1 Sistema de unidades
+
+| Magnitud | Unidades disponibles | Factor de conversión a SI |
+|----------|---------------------|--------------------------|
+| Distancia | m, km | 1 km = 1000 m |
+| Tiempo | s, min, h | 1 min = 60 s, 1 h = 3600 s |
+| Velocidad | m/s, km/h | 1 km/h = 0.277... m/s |
+
+Las unidades son **independientes** entre sí. Cada magnitud tiene su propio selector, incluyendo $x_i$ y $x_f$ que tienen selectores de distancia independientes (pueden ser m y km simultáneamente).
+
+### 8.2 Coherencia
+
+- Todos los cálculos se realizan internamente en SI (m, s, m/s)
+- Los resultados se convierten a la unidad seleccionada por el usuario para mostrar en las etiquetas
+- La unidad seleccionada no afecta el modelo físico subyacente
+- $x_i$ y $x_f$ pueden tener unidades de distancia diferentes (ej. $x_i$ en km, $x_f$ en m)
+- $\Delta x$ siempre usa la unidad de $x_i$ (`x0Unit`)
+- Por defecto: **m**, **s**, **m/s**
+
+### 8.3 Convenciones
 
 - Eje X positivo apunta siempre hacia la derecha (no configurable)
 - El sentido del movimiento se deduce del signo de la velocidad
 - $v > 0$ → movimiento hacia la derecha
 - $v < 0$ → movimiento hacia la izquierda
 - No existe selector independiente de sentido
-- Las unidades son solo de visualización, no afectan el modelo físico
-- Unidades por defecto: metros (m), segundos (s), m/s
 
 ---
 
@@ -169,33 +249,67 @@ Unidades actuales (SI): `m` para posiciones/desplazamiento, `m/s` para velocidad
 ### 9.1 Pipeline
 
 El flujo de generación de diagramas es:
-1. **Validación** de inputs
-2. **Resolución física** (cálculo de $x_f$, $\Delta x$)
-3. **Inferencia** del modelo de diagrama (dirección, orientación, visibilidad)
-4. **Construcción de escena** (SceneGraph con nodos semánticos)
-5. **Layout** (posicionamiento en coordenadas de pantalla)
-6. **Renderizado** (generación de SVG)
+
+1. **Resolución de variable faltante** (detectar cuál de los 4 campos debe auto-computarse)
+2. **Conversión de unidades** (entrada → SI → salida)
+3. **Validación** de inputs y consistencia
+4. **Resolución física** (cálculo de $x_f$, $\Delta x$)
+5. **Inferencia** del modelo de diagrama (dirección, orientación, visibilidad)
+6. **Construcción de escena** (SceneGraph con nodos semánticos)
+7. **Layout** (posicionamiento en coordenadas de pantalla)
+8. **Renderizado** (generación de SVG)
 
 ### 9.2 Diagrama base
 
-Cuando no todos los inputs están completos, se salta el pipeline y se renderiza directamente un diagrama base (eje + origen + caja) usando los mismos módulos de layout y render.
+Cuando no hay suficientes inputs para resolver (menos de 3 campos numéricos llenos), se salta el pipeline y se renderiza directamente un diagrama base (eje + origen + caja) usando los mismos módulos de layout y render.
 
 ### 9.3 Auto-generación
 
 El diagrama se regenera automáticamente 400ms después del último cambio en cualquier input. El botón "Generar Diagrama" fuerza la generación inmediata.
 
+Un botón **"Borrar datos"** debajo del formulario resetea todos los inputs, unidades y toggles a sus valores por defecto, y limpia el diagrama.
+
 ### 9.4 Arquitectura
 
+- `src/core/units.ts` → tipos y funciones de conversión de unidades
+- `src/core/format.ts` → formateo de números (3 decimales, sin decimales si es entero)
 - `src/core/layout-engine.ts` → posicionamiento de todos los elementos
 - `src/modules/mru/scene-builder.ts` → construcción de nodos semánticos
 - `src/core/renderer.ts` → conversión de nodos posicionados a SVG
 - `src/app/engine.ts` → coordinador del pipeline
 
+### 9.5 Resolución de variable faltante
+
+El motor detecta automáticamente qué variable debe calcularse según los campos ingresados:
+
+| Campos ingresados por el usuario | Variable a calcular | Fórmula |
+|---|---|---|
+| $x_i$, $v$, $t$ | $x_f$ | $x_f = x_i + v \cdot t$ |
+| $x_i$, $x_f$, $t$ | $v$ | $v = (x_f - x_i) / t$ |
+| $x_i$, $x_f$, $v$ | $t$ | $t = (x_f - x_i) / v$ |
+| $x_i$, $v$, $t$, $x_f$ | — | Validar consistencia |
+
+La variable calculada se auto-rellena en el input correspondiente y se marca como **computada**.
+
+Reglas adicionales:
+- Si el usuario edita el campo auto-computado, pasa a ser considerado **ingresado manualmente** y se valida consistencia con los demás
+- Si el usuario cambia una unidad mientras los 4 campos están llenos, se limpia el campo correspondiente a esa unidad y el motor lo re-computa en la nueva unidad:
+  - `x0Unit` → limpia $x_i$
+  - `xfUnit` → limpia $x_f$
+  - `timeUnit` → limpia $t$
+  - `velUnit` → limpia $v$
+- Si al cambiar una unidad solo hay 3 campos llenos, el motor re-computa el campo faltante con la nueva unidad sin necesidad de limpiar nada
+- No se pueden computar 2 variables simultáneamente. El usuario debe proveer al menos 3 campos
+
+### 9.6 Formato decimal
+
+La función `formatValue(value: number): string`:
+1. Redondea a 3 decimales: `Math.round(value * 1000) / 1000`
+2. Si el resultado es entero (sin parte decimal), devuelve la representación entera: `5` en vez de `5.000`
+3. Si tiene decimales, devuelve hasta 3: `5.123`, `0.5`, `3.1`
+
 ---
 
 ## 10. Pendientes / dudas por resolver
 
-- [x] Confirmar si la etiqueta $v > 0$ / $v < 0$ siempre incluye el signo o solo "v" cuando es obvio → **Resuelto: se muestra el valor numérico con unidad**
-- [ ] Confirmar si hay un título/encabezado en la parte superior del diagrama (tipo "MRU" o similar)
-- [x] Confirmar el formato exacto de $x_i$ y $x_f$ (subíndice itálico: $x_i$, $x_f$) → **Resuelto: sans-serif, sin itálica, formato `xi = {valor} m`**
-- [x] Confirmar el largo exacto del vector velocidad (fijo o relativo a algo) → **Resuelto: fijo, 80px**
+*(Sin pendientes por el momento)*

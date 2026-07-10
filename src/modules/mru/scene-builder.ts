@@ -1,7 +1,25 @@
 import type { SceneGraph } from '../../core/types.ts';
+import { formatValue } from '../../core/format.ts';
 import type { MRUDiagramModel } from './types.ts';
 
+function labelText(
+  prefix: string,
+  show: boolean,
+  value: number,
+  unit: string
+): string {
+  if (show) {
+    return `${prefix} = ${formatValue(value)} ${unit}`;
+  }
+  return prefix;
+}
+
 export function buildMRUScene(model: MRUDiagramModel): SceneGraph {
+  const x0Unit = model.x0Unit;
+  const xfUnit = model.xfUnit;
+  const timeUnit = model.timeUnit;
+  const velUnit = model.velUnit;
+
   return {
     id: 'scene',
     type: 'scene',
@@ -58,35 +76,35 @@ export function buildMRUScene(model: MRUDiagramModel): SceneGraph {
         id: 'label-xi',
         type: 'label',
         visible: true,
-        text: `xi = ${model.x0} m`,
+        text: labelText('xi', model.showValues.xi, model.x0, x0Unit),
         semanticRole: 'label-xi',
       },
       {
         id: 'label-xf',
         type: 'label',
         visible: true,
-        text: `xf = ${model.xf} m`,
+        text: labelText('xf', model.showValues.xf, model.xf, xfUnit),
         semanticRole: 'label-xf',
       },
       {
         id: 'label-v',
         type: 'label',
         visible: model.showVelocityVector,
-        text: `v = ${model.v} m/s`,
+        text: labelText('v', model.showValues.v, model.v, velUnit),
         semanticRole: 'label-v',
       },
       {
         id: 'label-t',
         type: 'label',
         visible: true,
-        text: `t = ${model.t} s`,
+        text: labelText('t', model.showValues.t, model.t, timeUnit),
         semanticRole: 'label-t',
       },
       {
         id: 'label-dx',
         type: 'label',
         visible: model.hasDisplacement,
-        text: `Δx = ${model.dx} m`,
+        text: labelText('Δx', model.showValues.dx, model.dx, x0Unit),
         semanticRole: 'label-dx',
       },
       {

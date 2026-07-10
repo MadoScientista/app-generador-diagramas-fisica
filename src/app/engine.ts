@@ -2,9 +2,31 @@ import { ModuleRegistry, layout, render } from '../core/index.ts';
 import type {
   PipelineResult,
   PipelineError,
-  PipelineSuccess,
   SceneGraph,
 } from '../core/types.ts';
+import type { DistanceUnit, TimeUnit, VelocityUnit } from '../core/units.ts';
+import type { ComputedField, ShowValuesFlags } from '../modules/mru/types.ts';
+import { resolveMRU } from '../modules/mru/physics.ts';
+
+interface GenerateOptions {
+  moduleId: string;
+  rawInput: Record<string, string>;
+  x0Unit: DistanceUnit;
+  xfUnit: DistanceUnit;
+  timeUnit: TimeUnit;
+  velUnit: VelocityUnit;
+  showValues: ShowValuesFlags;
+}
+
+interface PipelineResultExtended {
+  type: PipelineResult['type'];
+  message?: string;
+  detail?: string;
+  svg?: string;
+  layoutScene?: unknown;
+  computedField?: ComputedField;
+  resolvedValues?: { x0: number; v: number; t: number; xf: number; dx: number };
+}
 
 export class PhysicsDiagramEngine {
   private registry: ModuleRegistry;
@@ -13,10 +35,20 @@ export class PhysicsDiagramEngine {
     this.registry = registry;
   }
 
-  generate(moduleId: string, rawInput: Record<string, string>): PipelineResult {
-    const allFilled = Object.values(rawInput).every((v) => v.trim() !== '');
+  generate(opts: GenerateOptions): PipelineResultExtended {
+    const { moduleId, rawInput, x0Unit, xfUnit, timeUnit, velUnit, showValues } = opts;
 
-    if (!allFilled) {
+    const filledFields = Object.entries(rawInput)
+      .filter(([, v]) => v.trim() !== '')
+      .map(([k]) => k);
+    const filledCount = filledFields.length;
+
+    if (filledCount < 3) {
+      return this.renderBase();
+    }
+
+    const hasX0 = filledFields.includes('x0');
+    if (!hasX0) {
       return this.renderBase();
     }
 
@@ -33,21 +65,42 @@ export class PhysicsDiagramEngine {
       };
     }
 
-    const numericInput: Record<string, number> = {};
-    for (const [key, value] of Object.entries(rawInput)) {
-      numericInput[key] = Number(value);
+    function parseOptional(key: string): number | undefined {
+      const v = rawInput[key]?.trim();
+      return v !== '' ? Number(v) : undefined;
     }
 
-    let physicsResult;
+    let resolved;
     try {
-      physicsResult = module.solve(numericInput);
+      resolved = resolveMRU({
+        x0: parseOptional('x0')!,
+        v: parseOptional('v'),
+        t: parseOptional('t'),
+        xf: parseOptional('xf'),
+        x0Unit,
+        xfUnit,
+        timeUnit,
+        velUnit,
+      });
     } catch (e) {
-      return this.error('physics', `Error al resolver la física: ${(e as Error).message}`);
+      return this.error('physics', (e as Error).message);
     }
+
+    const { computedField, ...physicsResult } = resolved;
+
+    const physicsResultWithUnits = {
+      ...physicsResult,
+      x0Unit,
+      xfUnit,
+      timeUnit,
+      velUnit,
+      computedField,
+      showValues,
+    };
 
     let diagramModel;
     try {
-      diagramModel = module.infer(physicsResult);
+      diagramModel = module.infer(physicsResultWithUnits);
     } catch (e) {
       return this.error('inference', `Error al inferir el diagrama: ${(e as Error).message}`);
     }
@@ -77,10 +130,18 @@ export class PhysicsDiagramEngine {
       type: 'success',
       svg,
       layoutScene,
+      computedField,
+      resolvedValues: {
+        x0: physicsResult.x0,
+        v: physicsResult.v,
+        t: physicsResult.t,
+        xf: physicsResult.xf,
+        dx: physicsResult.dx,
+      },
     };
   }
 
-  private renderBase(): PipelineSuccess {
+  private renderBase(): PipelineResultExtended & { type: 'success' } {
     const baseScene: SceneGraph = {
       id: 'scene',
       type: 'scene',
