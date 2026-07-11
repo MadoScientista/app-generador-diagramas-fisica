@@ -15,6 +15,7 @@ const AXIS_Y = VIEWPORT_HEIGHT / 2 + 40;
 const CHARACTER_SIZE = 50;
 const TICK_SIZE = 8;
 const VECTOR_LENGTH = 80;
+const MIN_TICK_GAP = 50;
 const LABEL_OFFSET_Y = 22;
 const DISPLACEMENT_Y_OFFSET = 55;
 
@@ -38,35 +39,35 @@ function getLayer(node: SceneGraphNode): Layer {
   }
 }
 
-interface PhysRange {
-  min: number;
-  max: number;
-}
-
-function getPhysicalValues(nodes: SceneGraphNode[]): PhysRange {
-  const values: number[] = [0];
-
-  for (const node of nodes) {
-    if (node.type === 'position' && node.visible) {
-      values.push(node.physicalValue);
-    }
+function buildPhysScreenMap(nodes: SceneGraphNode[], margin: number, usableWidth: number): Map<number, number> {
+  const set = new Set<number>();
+  set.add(0);
+  for (const n of nodes) {
+    if (n.type === 'position' && n.visible) set.add(n.physicalValue);
   }
+  const phys = Array.from(set).sort((a, b) => a - b);
+  if (phys.length <= 1) return new Map([[phys[0], margin + usableWidth / 2]]);
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min;
+  const physMin = phys[0];
+  const physMax = phys[phys.length - 1];
+  const physRange = physMax - physMin || 1;
+  const totalPx = usableWidth;
 
-  if (range === 0) {
-    return { min: min - 5, max: max + 5 };
+  const linear = phys.map(v => margin + ((v - physMin) / physRange) * totalPx);
+  let ok = true;
+  for (let i = 1; i < phys.length; i++) {
+    if (linear[i] - linear[i - 1] < MIN_TICK_GAP) { ok = false; break; }
   }
+  if (ok) return new Map(phys.map((v, i) => [v, linear[i]]));
 
-  const padding = range * 0.15;
-  return { min: min - padding, max: max + padding };
-}
-
-function toScreenX(physicalX: number, physMin: number, physMax: number): number {
-  const t = (physMax - physMin) === 0 ? 0.5 : (physicalX - physMin) / (physMax - physMin);
-  return MARGIN + t * USABLE_WIDTH;
+  const minTotal = (phys.length - 1) * MIN_TICK_GAP;
+  const availProp = Math.max(0, totalPx - minTotal);
+  const out: number[] = [margin];
+  for (let i = 1; i < phys.length; i++) {
+    const frac = physRange === 0 ? 0 : (phys[i] - phys[i - 1]) / physRange;
+    out.push(out[i - 1] + MIN_TICK_GAP + frac * availProp);
+  }
+  return new Map(phys.map((v, i) => [v, out[i]]));
 }
 
 function flatten(root: SceneGraphNode): SceneGraphNode[] {
@@ -88,27 +89,27 @@ function flatten(root: SceneGraphNode): SceneGraphNode[] {
   return result;
 }
 
-function getInitialScreenX(nodes: SceneGraphNode[], physMin: number, physMax: number): number {
+function getInitialScreenX(nodes: SceneGraphNode[], map: Map<number, number>): number {
   for (const n of nodes) {
     if (n.type === 'position' && (n as { semanticRole: string }).semanticRole === 'initial' && n.visible) {
-      return toScreenX((n as { physicalValue: number }).physicalValue, physMin, physMax);
+      return map.get((n as { physicalValue: number }).physicalValue)!;
     }
   }
-  return toScreenX(0, physMin, physMax);
+  return map.get(0)!;
 }
 
-function getFinalScreenX(nodes: SceneGraphNode[], physMin: number, physMax: number): number {
+function getFinalScreenX(nodes: SceneGraphNode[], map: Map<number, number>): number {
   for (const n of nodes) {
     if (n.type === 'position' && (n as { semanticRole: string }).semanticRole === 'final' && n.visible) {
-      return toScreenX((n as { physicalValue: number }).physicalValue, physMin, physMax);
+      return map.get((n as { physicalValue: number }).physicalValue)!;
     }
   }
-  return toScreenX(0, physMin, physMax);
+  return map.get(0)!;
 }
 
 export function layout(sceneGraph: SceneGraph): LayoutScene {
   const nodes = flatten(sceneGraph);
-  const { min: physMin, max: physMax } = getPhysicalValues(nodes);
+  const posMap = buildPhysScreenMap(nodes, MARGIN, USABLE_WIDTH);
   const positioned: PositionedNode[] = [];
 
   for (const node of nodes) {
@@ -136,21 +137,21 @@ export function layout(sceneGraph: SceneGraph): LayoutScene {
         break;
 
       case 'origin': {
-        const sx = toScreenX(0, physMin, physMax);
+        const sx = posMap.get(0)!;
         pos = { x: sx, y: AXIS_Y };
         h = TICK_SIZE;
         break;
       }
 
       case 'position': {
-        const sx = toScreenX(node.physicalValue, physMin, physMax);
+        const sx = posMap.get(node.physicalValue)!;
         pos = { x: sx, y: AXIS_Y };
         h = TICK_SIZE;
         break;
       }
 
       case 'character': {
-        const cx = getInitialScreenX(nodes, physMin, physMax);
+        const cx = getInitialScreenX(nodes, posMap);
         pos = { x: cx - CHARACTER_SIZE / 2, y: AXIS_Y - CHARACTER_SIZE };
         w = CHARACTER_SIZE;
         h = CHARACTER_SIZE;
@@ -158,7 +159,7 @@ export function layout(sceneGraph: SceneGraph): LayoutScene {
       }
 
       case 'vector': {
-        const ix = getInitialScreenX(nodes, physMin, physMax);
+        const ix = getInitialScreenX(nodes, posMap);
         const arrowLen = node.orientation === 'left' ? -VECTOR_LENGTH : VECTOR_LENGTH;
         const startX = node.orientation === 'right'
           ? ix + CHARACTER_SIZE / 2
@@ -169,8 +170,8 @@ export function layout(sceneGraph: SceneGraph): LayoutScene {
       }
 
       case 'displacement-arrow': {
-        const sx = toScreenX(node.physicalXi, physMin, physMax);
-        const ex = toScreenX(node.physicalXf, physMin, physMax);
+        const sx = posMap.get(node.physicalXi)!;
+        const ex = posMap.get(node.physicalXf)!;
         const arrowY = AXIS_Y + DISPLACEMENT_Y_OFFSET;
         pos = { x: Math.min(sx, ex), y: arrowY };
         w = Math.abs(ex - sx);
@@ -178,14 +179,14 @@ export function layout(sceneGraph: SceneGraph): LayoutScene {
       }
 
       case 'label': {
-        const ix = getInitialScreenX(nodes, physMin, physMax);
-        const fx = getFinalScreenX(nodes, physMin, physMax);
+        const ix = getInitialScreenX(nodes, posMap);
+        const fx = getFinalScreenX(nodes, posMap);
         let labelX = ix;
         let labelY = AXIS_Y + TICK_SIZE + LABEL_OFFSET_Y;
 
         if (node.semanticRole === 'label-xi') {
-          const originSx = toScreenX(0, physMin, physMax);
-          const xiSx = getInitialScreenX(nodes, physMin, physMax);
+          const originSx = posMap.get(0)!;
+          const xiSx = getInitialScreenX(nodes, posMap);
           const screenDist = Math.abs(xiSx - originSx);
           if (screenDist < 50) {
             labelY = AXIS_Y - CHARACTER_SIZE / 2 - 36;
