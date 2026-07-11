@@ -52,14 +52,14 @@ export function MRUForm({
   return (
     <form onSubmit={handleSubmit} className="mru-form">
       <div className="form-field">
-        <label htmlFor="x0">xi (posición inicial)</label>
+        <label htmlFor="x0">Posición inicial</label>
         <div className="input-with-unit">
           <input
             id="x0"
             type="text"
             value={values.x0}
             onChange={(e) => onChange('x0', e.target.value)}
-            placeholder="0"
+            placeholder="xi"
           />
           <select
             value={x0Unit}
@@ -80,14 +80,14 @@ export function MRUForm({
       </div>
 
       <div className="form-field">
-        <label htmlFor="v">v (velocidad)</label>
+        <label htmlFor="v">Velocidad</label>
         <div className="input-with-unit">
           <input
             id="v"
             type="text"
             value={values.v}
             onChange={(e) => onChange('v', e.target.value)}
-            placeholder="1"
+            placeholder="v"
           />
           <select
             value={velUnit}
@@ -108,14 +108,14 @@ export function MRUForm({
       </div>
 
       <div className="form-field">
-        <label htmlFor="t">t (tiempo)</label>
+        <label htmlFor="t">Tiempo</label>
         <div className="input-with-unit">
           <input
             id="t"
             type="text"
             value={values.t}
             onChange={(e) => onChange('t', e.target.value)}
-            placeholder="1"
+            placeholder="t"
           />
           <select
             value={timeUnit}
@@ -136,14 +136,14 @@ export function MRUForm({
       </div>
 
       <div className="form-field">
-        <label htmlFor="xf">xf (posición final)</label>
+        <label htmlFor="xf">Posición final</label>
         <div className="input-with-unit">
           <input
             id="xf"
             type="text"
             value={values.xf}
             onChange={(e) => onChange('xf', e.target.value)}
-            placeholder="0"
+            placeholder="xf"
           />
           <select
             value={xfUnit}
