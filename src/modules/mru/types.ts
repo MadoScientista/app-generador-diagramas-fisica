@@ -8,10 +8,10 @@ export type ShowValuesFlags = {
   dx: boolean;
 };
 
-export type ComputedField = 'xf' | 'v' | 't' | null;
+export type ComputedField = 'x0' | 'xf' | 'v' | 't' | null;
 
 export interface MRUSolveInput {
-  x0: number;
+  x0?: number;
   v?: number;
   t?: number;
   xf?: number;

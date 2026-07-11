@@ -47,11 +47,6 @@ export class PhysicsDiagramEngine {
       return this.renderBase();
     }
 
-    const hasX0 = filledFields.includes('x0');
-    if (!hasX0) {
-      return this.renderBase();
-    }
-
     const module = this.registry.get(moduleId);
     if (!module) {
       return this.error('validation', `Módulo "${moduleId}" no encontrado.`);
@@ -73,7 +68,7 @@ export class PhysicsDiagramEngine {
     let resolved;
     try {
       resolved = resolveMRU({
-        x0: parseOptional('x0')!,
+        x0: parseOptional('x0'),
         v: parseOptional('v'),
         t: parseOptional('t'),
         xf: parseOptional('xf'),

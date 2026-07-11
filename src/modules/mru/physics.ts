@@ -2,33 +2,42 @@ import { toSI, fromSI } from '../../core/units.ts';
 import type { MRUSolveInput, MRUResolvedVars, ComputedField } from './types.ts';
 
 export function resolveMRU(input: MRUSolveInput): MRUResolvedVars {
+  const hasX0 = input.x0 !== undefined;
   const hasV = input.v !== undefined;
   const hasT = input.t !== undefined;
   const hasXf = input.xf !== undefined;
-  const filledCount = [true, hasV, hasT, hasXf].filter(Boolean).length;
+  const filledCount = [hasX0, hasV, hasT, hasXf].filter(Boolean).length;
 
   if (filledCount < 3) {
     throw new Error('Se requieren al menos 3 valores para resolver.');
   }
 
-  const x0SI = toSI(input.x0, input.x0Unit, 'distance');
-
   let computedField: ComputedField;
+  let x0SI: number;
   let vSI: number;
   let tSI: number;
   let xfSI: number;
 
-  if (!hasXf) {
+  if (!hasX0) {
+    vSI = toSI(input.v!, input.velUnit, 'velocity');
+    tSI = toSI(input.t!, input.timeUnit, 'time');
+    xfSI = toSI(input.xf!, input.xfUnit, 'distance');
+    x0SI = xfSI - vSI * tSI;
+    computedField = 'x0';
+  } else if (!hasXf) {
+    x0SI = toSI(input.x0!, input.x0Unit, 'distance');
     vSI = toSI(input.v!, input.velUnit, 'velocity');
     tSI = toSI(input.t!, input.timeUnit, 'time');
     xfSI = x0SI + vSI * tSI;
     computedField = 'xf';
   } else if (!hasV) {
+    x0SI = toSI(input.x0!, input.x0Unit, 'distance');
     xfSI = toSI(input.xf!, input.xfUnit, 'distance');
     tSI = toSI(input.t!, input.timeUnit, 'time');
     vSI = (xfSI - x0SI) / tSI;
     computedField = 'v';
   } else if (!hasT) {
+    x0SI = toSI(input.x0!, input.x0Unit, 'distance');
     xfSI = toSI(input.xf!, input.xfUnit, 'distance');
     vSI = toSI(input.v!, input.velUnit, 'velocity');
     if (Math.abs(vSI) < 1e-12) {
@@ -42,6 +51,7 @@ export function resolveMRU(input: MRUSolveInput): MRUResolvedVars {
     }
     computedField = 't';
   } else {
+    x0SI = toSI(input.x0!, input.x0Unit, 'distance');
     xfSI = toSI(input.xf!, input.xfUnit, 'distance');
     vSI = toSI(input.v!, input.velUnit, 'velocity');
     tSI = toSI(input.t!, input.timeUnit, 'time');

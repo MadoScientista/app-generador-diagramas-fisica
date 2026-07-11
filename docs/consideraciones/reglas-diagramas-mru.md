@@ -75,7 +75,15 @@ El origen NO está fijo en el centro. Se reubica según el rango de datos:
 - $x_i < 0$ y $x_f < 0$ → origen a la **derecha**
 - $x_i$ y $x_f$ tienen signos distintos → origen **entre ambos**. No necesariamente tiene que estar al centro entre ambos, se debe considerar la distancia según los valores de $x_i$ y $x_f$
 
-### 2.4 Diagrama base (sin inputs)
+### 2.4 Gap mínimo entre posiciones
+
+Para evitar que ticks de posiciones muy cercanas (ej. $x_i = 0.001$, $x_f = 5$) aparezcan superpuestos en pantalla, el layout engine impone una **distancia mínima de 50px** entre posiciones físicas distintas (origen, $x_i$, $x_f$).
+
+- Se prueba primero un mapeo lineal; si todos los gaps entre adyacentes son ≥ 50px, se usa directamente
+- Si algún gap es menor, se redistribuye: cada par adyacente recibe al menos 50px, y el espacio restante se asigna proporcionalmente a sus diferencias físicas
+- Posiciones idénticas en valor físico (ej. origen y $x_i = 0$) ocupan el mismo punto en pantalla
+
+### 2.5 Diagrama base (sin inputs)
 
 Cuando hay menos de 3 campos numéricos llenos, o no se ha proporcionado $x_i$, se renderiza solo:
 - Eje X principal

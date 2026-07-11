@@ -15,10 +15,6 @@ const registry = new ModuleRegistry();
 registry.register(MRUModule);
 const engine = new PhysicsDiagramEngine(registry);
 
-function threeFilled(x0: string, v: string, t: string, xf: string) {
-  return [x0, v, t, xf].filter((s) => s.trim() !== '').length >= 3;
-}
-
 function allFilled(x0: string, v: string, t: string, xf: string) {
   return [x0, v, t, xf].every((s) => s.trim() !== '');
 }
@@ -36,8 +32,6 @@ function App() {
     xi: true, xf: true, v: true, t: true, dx: true,
   });
   const [result, setResult] = useState<PipelineResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const computedFieldRef = useRef<{ field: ComputedField; value: string } | null>(null);
   const prevUnitsRef = useRef({ x0Unit, xfUnit, timeUnit, velUnit });
 
@@ -56,8 +50,6 @@ function App() {
     setVelUnit('m/s');
     setShowValues({ xi: true, xf: true, v: true, t: true, dx: true });
     setResult(null);
-    setLoading(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
     computedFieldRef.current = null;
     prevUnitsRef.current = { x0Unit: 'm', xfUnit: 'm', timeUnit: 's', velUnit: 'm/s' };
   }, []);
@@ -102,7 +94,10 @@ function App() {
       const computedValue = res.resolvedValues[computedField];
       const computedStr = formatValue(computedValue);
 
-      if (computedField === 'xf' && xf !== computedStr) {
+      if (computedField === 'x0' && x0 !== computedStr) {
+        setX0(computedStr);
+        computedFieldRef.current = { field: 'x0', value: computedStr };
+      } else if (computedField === 'xf' && xf !== computedStr) {
         setXf(computedStr);
         computedFieldRef.current = { field: 'xf', value: computedStr };
       } else if (computedField === 'v' && v !== computedStr) {
@@ -117,7 +112,7 @@ function App() {
     }
 
     setResult(res as PipelineResult);
-  }, [buildInput, v, t, xf, x0Unit, xfUnit, timeUnit, velUnit, showValues]);
+  }, [buildInput, x0, v, t, xf, x0Unit, xfUnit, timeUnit, velUnit, showValues]);
 
   const handleChange = useCallback((field: 'x0' | 'v' | 't' | 'xf', value: string) => {
     if (computedFieldRef.current?.field === field) {
@@ -129,30 +124,19 @@ function App() {
     else setXf(value);
   }, []);
 
-  const handleSubmit = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (threeFilled(x0, v, t, xf)) {
-      setLoading(true);
-      setResult(null);
-    }
+  const handleCalculate = useCallback(() => {
     runEngine();
-    setLoading(false);
-  }, [runEngine, x0, v, t, xf]);
+  }, [runEngine]);
+
+  const handleSubmit = useCallback(() => {
+    runEngine();
+  }, [runEngine]);
 
   useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      if (threeFilled(x0, v, t, xf)) {
-        setLoading(true);
-        setResult(null);
-      }
-      runEngine();
-      setLoading(false);
-    }, 400);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [x0, v, t, xf, x0Unit, xfUnit, timeUnit, velUnit, showValues, runEngine]);
+    const id = setTimeout(() => runEngine(), 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [x0Unit, xfUnit, timeUnit, velUnit, showValues]);
 
   return (
     <div className="app">
@@ -182,8 +166,8 @@ function App() {
             onShowValuesChange={(key) =>
               setShowValues((prev) => ({ ...prev, [key]: !prev[key] }))
             }
+            onCalculate={handleCalculate}
             onSubmit={handleSubmit}
-            disabled={loading}
           />
           <button className="clear-button" onClick={clearAll}>
             Borrar datos
@@ -195,13 +179,7 @@ function App() {
             <h2>Diagrama</h2>
             <ExportButton svg={svg} />
           </div>
-          {loading ? (
-            <div className="diagram-loading">
-              <p>Generando diagrama...</p>
-            </div>
-          ) : (
-            <DiagramView svg={svg} error={error} errorDetail={errorDetail} />
-          )}
+          <DiagramView svg={svg} error={error} errorDetail={errorDetail} />
         </section>
       </main>
     </div>

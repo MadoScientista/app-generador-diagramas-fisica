@@ -22,8 +22,8 @@ interface MRUFormProps {
   onVelUnitChange: (unit: VelocityUnit) => void;
   showValues: ShowValuesFlags;
   onShowValuesChange: (key: keyof ShowValuesFlags) => void;
+  onCalculate: () => void;
   onSubmit: () => void;
-  disabled?: boolean;
 }
 
 export function MRUForm({
@@ -39,9 +39,11 @@ export function MRUForm({
   onVelUnitChange,
   showValues,
   onShowValuesChange,
+  onCalculate,
   onSubmit,
-  disabled,
 }: MRUFormProps) {
+  const filledCount = [values.x0, values.v, values.t, values.xf].filter((s) => s.trim() !== '').length;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
@@ -58,12 +60,10 @@ export function MRUForm({
             value={values.x0}
             onChange={(e) => onChange('x0', e.target.value)}
             placeholder="0"
-            disabled={disabled}
           />
           <select
             value={x0Unit}
             onChange={(e) => onX0UnitChange(e.target.value as DistanceUnit)}
-            disabled={disabled}
           >
             {DISTANCE_UNITS.map((u) => (
               <option key={u} value={u}>{u}</option>
@@ -88,12 +88,10 @@ export function MRUForm({
             value={values.v}
             onChange={(e) => onChange('v', e.target.value)}
             placeholder="1"
-            disabled={disabled}
           />
           <select
             value={velUnit}
             onChange={(e) => onVelUnitChange(e.target.value as VelocityUnit)}
-            disabled={disabled}
           >
             {VELOCITY_UNITS.map((u) => (
               <option key={u} value={u}>{u}</option>
@@ -118,12 +116,10 @@ export function MRUForm({
             value={values.t}
             onChange={(e) => onChange('t', e.target.value)}
             placeholder="1"
-            disabled={disabled}
           />
           <select
             value={timeUnit}
             onChange={(e) => onTimeUnitChange(e.target.value as TimeUnit)}
-            disabled={disabled}
           >
             {TIME_UNITS.map((u) => (
               <option key={u} value={u}>{u}</option>
@@ -148,12 +144,10 @@ export function MRUForm({
             value={values.xf}
             onChange={(e) => onChange('xf', e.target.value)}
             placeholder="0"
-            disabled={disabled}
           />
           <select
             value={xfUnit}
             onChange={(e) => onXfUnitChange(e.target.value as DistanceUnit)}
-            disabled={disabled}
           >
             {DISTANCE_UNITS.map((u) => (
               <option key={u} value={u}>{u}</option>
@@ -179,7 +173,10 @@ export function MRUForm({
         </label>
       </div>
 
-      <button type="submit" disabled={disabled}>
+      <button type="button" className="calculate-button" onClick={onCalculate} disabled={filledCount !== 3}>
+        Calcular
+      </button>
+      <button type="submit">
         Generar Diagrama
       </button>
     </form>
