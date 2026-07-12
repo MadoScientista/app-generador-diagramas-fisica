@@ -15,6 +15,7 @@ const AXIS_Y = VIEWPORT_HEIGHT / 2 + 40;
 const CHARACTER_SIZE = 50;
 const TICK_SIZE = 8;
 const VECTOR_LENGTH = 80;
+const POSITION_PADDING = 40;
 const MIN_TICK_GAP = 50;
 const LABEL_OFFSET_Y = 22;
 const DISPLACEMENT_Y_OFFSET = 55;
@@ -40,20 +41,23 @@ function getLayer(node: SceneGraphNode): Layer {
 }
 
 function buildPhysScreenMap(nodes: SceneGraphNode[], margin: number, usableWidth: number): Map<number, number> {
+  const padMargin = margin + POSITION_PADDING;
+  const padWidth = usableWidth - 2 * POSITION_PADDING;
+
   const set = new Set<number>();
   set.add(0);
   for (const n of nodes) {
     if (n.type === 'position' && n.visible) set.add(n.physicalValue);
   }
   const phys = Array.from(set).sort((a, b) => a - b);
-  if (phys.length <= 1) return new Map([[phys[0], margin + usableWidth / 2]]);
+  if (phys.length <= 1) return new Map([[phys[0], padMargin + padWidth / 2]]);
 
   const physMin = phys[0];
   const physMax = phys[phys.length - 1];
   const physRange = physMax - physMin || 1;
-  const totalPx = usableWidth;
+  const totalPx = padWidth;
 
-  const linear = phys.map(v => margin + ((v - physMin) / physRange) * totalPx);
+  const linear = phys.map(v => padMargin + ((v - physMin) / physRange) * totalPx);
   let ok = true;
   for (let i = 1; i < phys.length; i++) {
     if (linear[i] - linear[i - 1] < MIN_TICK_GAP) { ok = false; break; }
@@ -62,7 +66,7 @@ function buildPhysScreenMap(nodes: SceneGraphNode[], margin: number, usableWidth
 
   const minTotal = (phys.length - 1) * MIN_TICK_GAP;
   const availProp = Math.max(0, totalPx - minTotal);
-  const out: number[] = [margin];
+  const out: number[] = [padMargin];
   for (let i = 1; i < phys.length; i++) {
     const frac = physRange === 0 ? 0 : (phys[i] - phys[i - 1]) / physRange;
     out.push(out[i - 1] + MIN_TICK_GAP + frac * availProp);
@@ -198,7 +202,11 @@ export function layout(sceneGraph: SceneGraph): LayoutScene {
           labelY = AXIS_Y + TICK_SIZE + LABEL_OFFSET_Y;
         } else if (node.semanticRole === 'label-v') {
           const dir = ix <= fx ? 1 : -1;
-          labelX = ix + dir * (CHARACTER_SIZE / 2 + VECTOR_LENGTH / 2);
+          const baseOffset = CHARACTER_SIZE / 2 + VECTOR_LENGTH / 2;
+          const estHalfWidth = node.text.length * 4;
+          const minOffset = CHARACTER_SIZE / 2 + 10 + estHalfWidth;
+          const offset = Math.max(baseOffset, minOffset);
+          labelX = ix + dir * offset;
           labelY = AXIS_Y - CHARACTER_SIZE / 2 - 14;
         } else if (node.semanticRole === 'label-t') {
           labelX = (ix + fx) / 2;
