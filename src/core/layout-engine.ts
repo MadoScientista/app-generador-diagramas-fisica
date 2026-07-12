@@ -199,7 +199,20 @@ export function layout(sceneGraph: SceneGraph): LayoutScene {
           }
         } else if (node.semanticRole === 'label-xf') {
           labelX = fx;
-          labelY = AXIS_Y + TICK_SIZE + LABEL_OFFSET_Y;
+          const originSx = posMap.get(0)!;
+          const xfSx = getFinalScreenX(nodes, posMap);
+          const xfDist = Math.abs(xfSx - originSx);
+          if (xfDist < 50) {
+            const xiSx = getInitialScreenX(nodes, posMap);
+            const xiDist = Math.abs(xiSx - originSx);
+            if (xiDist < 50) {
+              labelY = AXIS_Y - CHARACTER_SIZE / 2 - 54;
+            } else {
+              labelY = AXIS_Y - CHARACTER_SIZE / 2 - 36;
+            }
+          } else {
+            labelY = AXIS_Y + TICK_SIZE + LABEL_OFFSET_Y;
+          }
         } else if (node.semanticRole === 'label-v') {
           const dir = ix <= fx ? 1 : -1;
           const baseOffset = CHARACTER_SIZE / 2 + VECTOR_LENGTH / 2;

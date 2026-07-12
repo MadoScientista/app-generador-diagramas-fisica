@@ -75,6 +75,10 @@ El origen NO está fijo en el centro. Se reubica según el rango de datos:
 - $x_i < 0$ y $x_f < 0$ → origen a la **derecha**
 - $x_i$ y $x_f$ tienen signos distintos → origen **entre ambos**. No necesariamente tiene que estar al centro entre ambos, se debe considerar la distancia según los valores de $x_i$ y $x_f$
 
+Los valores físicos se convierten internamente a SI en la construcción de escena, por lo que la proporcionalidad es correcta incluso cuando $x_i$ y $x_f$ tienen unidades de distancia diferentes (ej. $x_i$ en m, $x_f$ en km).
+
+Los ticks de posición se restringen a una banda de `USABLE_WIDTH - 2 * POSITION_PADDING` (con `POSITION_PADDING = 40px`) centrada dentro del eje, dejando aire visual en los extremos.
+
 ### 2.4 Gap mínimo entre posiciones
 
 Para evitar que ticks de posiciones muy cercanas (ej. $x_i = 0.001$, $x_f = 5$) aparezcan superpuestos en pantalla, el layout engine impone una **distancia mínima de 50px** entre posiciones físicas distintas (origen, $x_i$, $x_f$).
@@ -85,12 +89,10 @@ Para evitar que ticks de posiciones muy cercanas (ej. $x_i = 0.001$, $x_f = 5$) 
 
 ### 2.5 Diagrama base (sin inputs)
 
-Cuando hay menos de 3 campos numéricos llenos, o no se ha proporcionado $x_i$, se renderiza solo:
+Cuando hay menos de 3 campos numéricos llenos, se renderiza solo:
 - Eje X principal
 - Origen con etiqueta $x = 0$
 - Caja centrada en el origen, sin orientación (mirada neutra)
-
-$3$ campos no es suficiente si $x_i$ está vacío: $x_i$ siempre debe estar presente para resolver.
 
 ---
 
@@ -134,7 +136,7 @@ Donde `{unidad}` depende de los selects de unidad elegidos por el usuario.
 | $x = 0$ | `x = 0` | Debajo del tick del origen |
 | $x_i$ | `xi = 20 m` | **Sobre el cuadrado** cuando $x_i$ está cerca del origen (distancia en pantalla < 50px); debajo del tick en caso contrario |
 | $x_f$ | `xf = 50 m` | Debajo del tick de $x_f$ |
-| $v$ | `v = 3 m/s` | Encima del vector velocidad, centrado |
+| $v$ | `v = 3 m/s` | Encima del vector velocidad, centrado. Si el texto es largo, se desplaza horizontalmente para mantener 10px de separación con el borde del cuadrado |
 | $t$ | `t = 10 s` | En el punto medio entre $x_i$ y $x_f$, arriba de $v$ |
 | $\Delta x$ | `Δx = 30 m` | En el punto medio entre $x_i$ y $x_f$, debajo de la flecha de desplazamiento |
 
@@ -271,9 +273,11 @@ El flujo de generación de diagramas es:
 
 Cuando no hay suficientes inputs para resolver (menos de 3 campos numéricos llenos), se salta el pipeline y se renderiza directamente un diagrama base (eje + origen + caja) usando los mismos módulos de layout y render.
 
-### 9.3 Auto-generación
+### 9.3 Generación del diagrama
 
-El diagrama se regenera automáticamente 400ms después del último cambio en cualquier input. El botón "Generar Diagrama" fuerza la generación inmediata.
+El diagrama se genera al presionar **"Generar Diagrama"**. También se regenera automáticamente cuando el usuario cambia una unidad de medida o un toggle de visibilidad.
+
+Un botón **"Calcular"** se habilita cuando exactamente 3 campos numéricos están llenos. Al presionarlo, el motor computa el campo faltante, lo auto-rellena y genera el diagrama.
 
 Un botón **"Borrar datos"** debajo del formulario resetea todos los inputs, unidades y toggles a sus valores por defecto, y limpia el diagrama.
 
@@ -288,13 +292,14 @@ Un botón **"Borrar datos"** debajo del formulario resetea todos los inputs, uni
 
 ### 9.5 Resolución de variable faltante
 
-El motor detecta automáticamente qué variable debe calcularse según los campos ingresados:
+El motor detecta qué variable debe calcularse según los campos ingresados al presionar "Calcular" o "Generar Diagrama":
 
 | Campos ingresados por el usuario | Variable a calcular | Fórmula |
 |---|---|---|
 | $x_i$, $v$, $t$ | $x_f$ | $x_f = x_i + v \cdot t$ |
 | $x_i$, $x_f$, $t$ | $v$ | $v = (x_f - x_i) / t$ |
 | $x_i$, $x_f$, $v$ | $t$ | $t = (x_f - x_i) / v$ |
+| $v$, $t$, $x_f$ | $x_i$ | $x_i = x_f - v \cdot t$ |
 | $x_i$, $v$, $t$, $x_f$ | — | Validar consistencia |
 
 La variable calculada se auto-rellena en el input correspondiente y se marca como **computada**.
@@ -316,8 +321,4 @@ La función `formatValue(value: number): string`:
 2. Si el resultado es entero (sin parte decimal), devuelve la representación entera: `5` en vez de `5.000`
 3. Si tiene decimales, devuelve hasta 3: `5.123`, `0.5`, `3.1`
 
----
 
-## 10. Pendientes / dudas por resolver
-
-*(Sin pendientes por el momento)*
