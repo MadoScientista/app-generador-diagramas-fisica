@@ -8,12 +8,21 @@ import { ExportButton } from './ui/components/ExportButton.tsx';
 import { formatValue } from './core/format.ts';
 import type { PipelineResult } from './core/types.ts';
 import type { DistanceUnit, TimeUnit, VelocityUnit } from './core/units.ts';
-import type { ComputedField, ShowValuesFlags } from './modules/mru/types.ts';
+import type { ComputedField } from './modules/mru/types.ts';
+import type { DiagramControls, ElementControls } from './modules/mru/types.ts';
 import './App.css';
 
 const registry = new ModuleRegistry();
 registry.register(MRUModule);
 const engine = new PhysicsDiagramEngine(registry);
+
+const DEFAULT_CONTROLS: DiagramControls = {
+  xi: { showLabel: true, showValue: true },
+  xf: { showLabel: true, showValue: true },
+  v: { showLabel: true, showValue: true, showVector: true },
+  t: { showLabel: true, showValue: true },
+  dx: { showLabel: true, showValue: true, showVector: true },
+};
 
 function allFilled(x0: string, v: string, t: string, xf: string) {
   return [x0, v, t, xf].every((s) => s.trim() !== '');
@@ -28,9 +37,7 @@ function App() {
   const [xfUnit, setXfUnit] = useState<DistanceUnit>('m');
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('s');
   const [velUnit, setVelUnit] = useState<VelocityUnit>('m/s');
-  const [showValues, setShowValues] = useState<ShowValuesFlags>({
-    xi: true, xf: true, v: true, t: true, dx: true,
-  });
+  const [controls, setControls] = useState<DiagramControls>(DEFAULT_CONTROLS);
   const [result, setResult] = useState<PipelineResult | null>(null);
   const computedFieldRef = useRef<{ field: ComputedField; value: string } | null>(null);
   const prevUnitsRef = useRef({ x0Unit, xfUnit, timeUnit, velUnit });
@@ -48,7 +55,7 @@ function App() {
     setXfUnit('m');
     setTimeUnit('s');
     setVelUnit('m/s');
-    setShowValues({ xi: true, xf: true, v: true, t: true, dx: true });
+    setControls(DEFAULT_CONTROLS);
     setResult(null);
     computedFieldRef.current = null;
     prevUnitsRef.current = { x0Unit: 'm', xfUnit: 'm', timeUnit: 's', velUnit: 'm/s' };
@@ -87,7 +94,7 @@ function App() {
       xfUnit,
       timeUnit,
       velUnit,
-      showValues,
+      controls,
     });
 
     if (res.type === 'success' && res.computedField && res.resolvedValues) {
@@ -113,7 +120,7 @@ function App() {
     }
 
     setResult(res as PipelineResult);
-  }, [buildInput, x0, v, t, xf, x0Unit, xfUnit, timeUnit, velUnit, showValues]);
+  }, [buildInput, x0, v, t, xf, x0Unit, xfUnit, timeUnit, velUnit, controls]);
 
   const handleChange = useCallback((field: 'x0' | 'v' | 't' | 'xf', value: string) => {
     if (computedFieldRef.current?.field === field) {
@@ -123,6 +130,13 @@ function App() {
     else if (field === 'v') setV(value);
     else if (field === 't') setT(value);
     else setXf(value);
+  }, []);
+
+  const handleControlChange = useCallback((element: keyof DiagramControls, field: keyof ElementControls, value: boolean) => {
+    setControls((prev) => ({
+      ...prev,
+      [element]: { ...prev[element], [field]: value },
+    }));
   }, []);
 
   const handleCalculate = useCallback(() => {
@@ -137,7 +151,7 @@ function App() {
     const id = setTimeout(() => runEngine(), 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [x0Unit, xfUnit, timeUnit, velUnit, showValues]);
+  }, [x0Unit, xfUnit, timeUnit, velUnit, controls]);
 
   return (
     <div className="app">
@@ -163,10 +177,8 @@ function App() {
             onXfUnitChange={setXfUnit}
             onTimeUnitChange={setTimeUnit}
             onVelUnitChange={setVelUnit}
-            showValues={showValues}
-            onShowValuesChange={(key) =>
-              setShowValues((prev) => ({ ...prev, [key]: !prev[key] }))
-            }
+            controls={controls}
+            onControlChange={handleControlChange}
             onCalculate={handleCalculate}
             onSubmit={handleSubmit}
           />

@@ -1,6 +1,6 @@
 import { DISTANCE_UNITS, TIME_UNITS, VELOCITY_UNITS } from '../../core/units.ts';
 import type { DistanceUnit, TimeUnit, VelocityUnit } from '../../core/units.ts';
-import type { ShowValuesFlags } from '../../modules/mru/types.ts';
+import type { DiagramControls, ElementControls } from '../../modules/mru/types.ts';
 
 interface MRUFormValues {
   x0: string;
@@ -20,11 +20,25 @@ interface MRUFormProps {
   onXfUnitChange: (unit: DistanceUnit) => void;
   onTimeUnitChange: (unit: TimeUnit) => void;
   onVelUnitChange: (unit: VelocityUnit) => void;
-  showValues: ShowValuesFlags;
-  onShowValuesChange: (key: keyof ShowValuesFlags) => void;
+  controls: DiagramControls;
+  onControlChange: (element: keyof DiagramControls, field: keyof ElementControls, value: boolean) => void;
   onCalculate: () => void;
   onSubmit: () => void;
 }
+
+interface ControlRow {
+  id: keyof DiagramControls;
+  label: string;
+  hasVector: boolean;
+}
+
+const CONTROL_ROWS: ControlRow[] = [
+  { id: 'xi', label: 'xi', hasVector: false },
+  { id: 'xf', label: 'xf', hasVector: false },
+  { id: 'v', label: 'v', hasVector: true },
+  { id: 't', label: 't', hasVector: false },
+  { id: 'dx', label: 'Δx', hasVector: true },
+];
 
 export function MRUForm({
   values,
@@ -37,8 +51,8 @@ export function MRUForm({
   onXfUnitChange,
   onTimeUnitChange,
   onVelUnitChange,
-  showValues,
-  onShowValuesChange,
+  controls,
+  onControlChange,
   onCalculate,
   onSubmit,
 }: MRUFormProps) {
@@ -70,13 +84,6 @@ export function MRUForm({
             ))}
           </select>
         </div>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={showValues.xi}
-            onChange={() => onShowValuesChange('xi')}
-          /> Mostrar valor
-        </label>
       </div>
 
       <div className="form-field">
@@ -98,13 +105,6 @@ export function MRUForm({
             ))}
           </select>
         </div>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={showValues.v}
-            onChange={() => onShowValuesChange('v')}
-          /> Mostrar valor
-        </label>
       </div>
 
       <div className="form-field">
@@ -126,13 +126,6 @@ export function MRUForm({
             ))}
           </select>
         </div>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={showValues.t}
-            onChange={() => onShowValuesChange('t')}
-          /> Mostrar valor
-        </label>
       </div>
 
       <div className="form-field">
@@ -154,28 +147,57 @@ export function MRUForm({
             ))}
           </select>
         </div>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={showValues.xf}
-            onChange={() => onShowValuesChange('xf')}
-          /> Mostrar valor
-        </label>
-      </div>
-
-      <div className="form-field">
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={showValues.dx}
-            onChange={() => onShowValuesChange('dx')}
-          /> Mostrar Δx
-        </label>
       </div>
 
       <button type="button" className="calculate-button" onClick={onCalculate} disabled={filledCount !== 3}>
         Calcular
       </button>
+
+      <div className="controls-section">
+        <h3>Visualización</h3>
+        <div className="controls-table">
+          <div className="controls-row controls-header">
+            <span className="controls-cell element-label">Elemento</span>
+            <span className="controls-cell">Etiqueta</span>
+            <span className="controls-cell">Valor</span>
+            <span className="controls-cell">Vector</span>
+          </div>
+          {CONTROL_ROWS.map((row) => {
+            const ctrl = controls[row.id];
+            const showValueDisabled = !ctrl.showLabel;
+            return (
+              <div key={row.id} className="controls-row">
+                <span className="controls-cell element-label">{row.label}</span>
+                <span className="controls-cell">
+                  <input
+                    type="checkbox"
+                    checked={ctrl.showLabel}
+                    onChange={() => onControlChange(row.id, 'showLabel', !ctrl.showLabel)}
+                  />
+                </span>
+                <span className="controls-cell">
+                  <input
+                    type="checkbox"
+                    checked={ctrl.showValue && ctrl.showLabel}
+                    disabled={showValueDisabled}
+                    onChange={() => onControlChange(row.id, 'showValue', !ctrl.showValue)}
+                  />
+                </span>
+                <span className="controls-cell">
+                  {row.hasVector ? (
+                    <input
+                      type="checkbox"
+                      checked={'showVector' in ctrl ? (ctrl as ElementControls & { showVector: boolean }).showVector : false}
+                      onChange={() => onControlChange(row.id, 'showVector', !('showVector' in ctrl ? (ctrl as ElementControls & { showVector: boolean }).showVector : false))}
+                    />
+                  ) : null}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <button type="submit">
         Generar Diagrama
       </button>

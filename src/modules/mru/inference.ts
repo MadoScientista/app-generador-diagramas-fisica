@@ -1,7 +1,13 @@
-import type { MRUResult, MRUDiagramModel, ShowValuesFlags } from './types.ts';
+import type { MRUResult, MRUDiagramModel, DiagramControls } from './types.ts';
 
-export function inferMRU(result: MRUResult & { showValues?: ShowValuesFlags }): MRUDiagramModel {
-  const showValues = result.showValues ?? { xi: true, xf: true, v: true, t: true, dx: true };
+export function inferMRU(result: MRUResult & { controls?: DiagramControls }): MRUDiagramModel {
+  const controls = result.controls ?? {
+    xi: { showLabel: true, showValue: true },
+    xf: { showLabel: true, showValue: true },
+    v: { showLabel: true, showValue: true, showVector: true },
+    t: { showLabel: true, showValue: true },
+    dx: { showLabel: true, showValue: true, showVector: true },
+  };
   let direction: 'left' | 'right' | 'none';
   let characterOrientation: 'left' | 'right' | 'none';
   let showVelocityVector: boolean;
@@ -40,6 +46,6 @@ export function inferMRU(result: MRUResult & { showValues?: ShowValuesFlags }): 
     xfUnit: result.xfUnit,
     timeUnit: result.timeUnit,
     velUnit: result.velUnit,
-    showValues,
+    controls,
   };
 }

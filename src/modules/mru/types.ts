@@ -1,14 +1,20 @@
 import type { DistanceUnit, TimeUnit, VelocityUnit } from '../../core/units.ts';
 
-export type ShowValuesFlags = {
-  xi: boolean;
-  xf: boolean;
-  v: boolean;
-  t: boolean;
-  dx: boolean;
-};
-
 export type ComputedField = 'x0' | 'xf' | 'v' | 't' | null;
+
+export interface ElementControls {
+  showLabel: boolean;
+  showValue: boolean;
+  showVector?: boolean;
+}
+
+export type DiagramControls = {
+  xi: ElementControls;
+  xf: ElementControls;
+  v: ElementControls & { showVector: boolean };
+  t: ElementControls;
+  dx: ElementControls & { showVector: boolean };
+};
 
 export interface MRUSolveInput {
   x0?: number;
@@ -41,7 +47,7 @@ export interface MRUResult {
   timeUnit: TimeUnit;
   velUnit: VelocityUnit;
   computedField: ComputedField;
-  showValues?: ShowValuesFlags;
+  controls?: DiagramControls;
 }
 
 export interface MRUDiagramModel {
@@ -59,6 +65,6 @@ export interface MRUDiagramModel {
   xfUnit: DistanceUnit;
   timeUnit: TimeUnit;
   velUnit: VelocityUnit;
-  showValues: ShowValuesFlags;
+  controls: DiagramControls;
 }
 

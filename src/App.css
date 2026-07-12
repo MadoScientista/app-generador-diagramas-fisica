@@ -193,6 +193,56 @@
   cursor: not-allowed;
 }
 
+.controls-section {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.controls-section h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.controls-table {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 1fr;
+  gap: 0;
+  font-size: 0.8rem;
+}
+
+.controls-row {
+  display: contents;
+}
+
+.controls-header {
+  font-weight: 600;
+  color: #555;
+}
+
+.controls-cell {
+  padding: 0.35rem 0.25rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.controls-cell.element-label {
+  text-align: left;
+  font-weight: 500;
+  padding-left: 0;
+}
+
+.controls-cell input[type='checkbox'] {
+  cursor: pointer;
+}
+
+.controls-cell input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
 .diagram-section {
   display: flex;
   flex-direction: column;

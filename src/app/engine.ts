@@ -5,7 +5,7 @@ import type {
   SceneGraph,
 } from '../core/types.ts';
 import type { DistanceUnit, TimeUnit, VelocityUnit } from '../core/units.ts';
-import type { ComputedField, ShowValuesFlags } from '../modules/mru/types.ts';
+import type { ComputedField, DiagramControls } from '../modules/mru/types.ts';
 import { resolveMRU } from '../modules/mru/physics.ts';
 
 interface GenerateOptions {
@@ -15,7 +15,7 @@ interface GenerateOptions {
   xfUnit: DistanceUnit;
   timeUnit: TimeUnit;
   velUnit: VelocityUnit;
-  showValues: ShowValuesFlags;
+  controls: DiagramControls;
 }
 
 interface PipelineResultExtended {
@@ -36,7 +36,7 @@ export class PhysicsDiagramEngine {
   }
 
   generate(opts: GenerateOptions): PipelineResultExtended {
-    const { moduleId, rawInput, x0Unit, xfUnit, timeUnit, velUnit, showValues } = opts;
+    const { moduleId, rawInput, x0Unit, xfUnit, timeUnit, velUnit, controls } = opts;
 
     const filledFields = Object.entries(rawInput)
       .filter(([, v]) => v.trim() !== '')
@@ -90,7 +90,7 @@ export class PhysicsDiagramEngine {
       timeUnit,
       velUnit,
       computedField,
-      showValues,
+      controls,
     };
 
     let diagramModel;
