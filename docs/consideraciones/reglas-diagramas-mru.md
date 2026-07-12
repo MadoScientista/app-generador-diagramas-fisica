@@ -30,19 +30,29 @@ Todo diagrama MRU contiene:
 | Unidad de tiempo | Selector: s, min, h | s |
 | Unidad de velocidad | Selector: m/s o km/h | m/s |
 
-### 1.2 Toggles de visibilidad de etiquetas
+### 1.2 Control de visualización de elementos
 
-Cada magnitud tiene un toggle independiente que controla si se muestra su valor en el diagrama:
+Cada elemento del diagrama tiene controles independientes en una tabla de 3 columnas, organizada dentro de un **card** con borde redondeado:
 
-| Magnitud | Label sin valor | Label con valor |
-|----------|----------------|-----------------|
-| $x_i$ | `xi` | `xi = 20 m` |
-| $x_f$ | `xf` | `xf = 50 m` |
-| $v$ | `v` | `v = 3 m/s` |
-| $t$ | `t` | `t = 10 s` |
-| $\Delta x$ | `Δx` | `Δx = 30 m` |
+| Columna | Descripción |
+|---------|-------------|
+| **Etiqueta** | Muestra/oculta la etiqueta completa del elemento en el diagrama |
+| **Valor** | Muestra el valor numérico con unidad dentro de la etiqueta (solo si Etiqueta está activo) |
+| **Vector** | Muestra el vector/flecha del elemento (solo disponible para $v$ y $\Delta x$) |
 
-Cuando un toggle está desactivado, la etiqueta muestra solo el identificador (sin valor ni unidad). Cuando está activado, muestra el formato completo.
+La tabla de visualización:
+
+| Elemento | Etiqueta | Valor | Vector |
+|----------|----------|-------|--------|
+| $x_i$ | `xi` / `xi = 20 m` | Activo/Inactivo | — |
+| $x_f$ | `xf` / `xf = 50 m` | Activo/Inactivo | — |
+| $v$ | `v` / `v = 3 m/s` | Activo/Inactivo | Activo/Inactivo |
+| $t$ | `t` / `t = 10 s` | Activo/Inactivo | — |
+| $\Delta x$ | `Δx` / `Δx = 30 m` | Activo/Inactivo | Activo/Inactivo |
+
+- El checkbox **Valor** se deshabilita automáticamente si **Etiqueta** está destildado
+- El checkbox **Vector** solo existe para $v$ (controla el vector velocidad) y $\Delta x$ (controla la flecha de desplazamiento)
+- La visibilidad final del vector/flecha depende tanto del toggle Vector como de la condición física ($v \neq 0$ para vector, $\Delta x \neq 0$ para flecha)
 
 ---
 
@@ -135,26 +145,27 @@ Donde `{unidad}` depende de los selects de unidad elegidos por el usuario.
 |-------|-------------|----------|
 | $x = 0$ | `x = 0` | Debajo del tick del origen |
 | $x_i$ | `xi = 20 m` | **Sobre el cuadrado** cuando $x_i$ está cerca del origen (distancia en pantalla < 50px); debajo del tick en caso contrario |
-| $x_f$ | `xf = 50 m` | Debajo del tick de $x_f$ |
+| $x_f$ | `xf = 50 m` | **Sobre el cuadrado** cuando $x_f$ está cerca del origen (distancia en pantalla < 50px), subiendo 18px extra si $x_i$ también está elevado; debajo del tick en caso contrario |
 | $v$ | `v = 3 m/s` | Encima del vector velocidad, centrado. Si el texto es largo, se desplaza horizontalmente para mantener 10px de separación con el borde del cuadrado |
 | $t$ | `t = 10 s` | En el punto medio entre $x_i$ y $x_f$, arriba de $v$ |
 | $\Delta x$ | `Δx = 30 m` | En el punto medio entre $x_i$ y $x_f$, debajo de la flecha de desplazamiento |
 
 ### 5.2 Estilo
 
-- Las etiquetas usan **sans-serif**, sin itálica
+- Las etiquetas usan **Inter** (Roboto como fallback), sans-serif, sin itálica
 - La posición inicial se etiqueta como **xi**, no como x₀
 - La posición final se etiqueta como **xf**
 - $x = 0$ es la única etiqueta que no lleva valor ni unidad
 
 ### 5.3 Control de visibilidad
 
-Cada magnitud tiene un toggle en la UI que controla si se muestra el valor en la etiqueta:
+Cada elemento tiene 3 controles en la UI, organizados en una tabla:
 
-- **Toggle activado**: `xi = 20 m`, `xf = 50 m`, `v = 3 m/s`, `t = 10 s`, `Δx = 30 m`
-- **Toggle desactivado**: `xi`, `xf`, `v`, `t`, `Δx` (solo identificador, sin valor ni unidad)
+- **Etiqueta**: si está desactivado, el nodo completo se oculta del SVG
+- **Valor**: si está activado, la etiqueta muestra `{id} = {valor} {unidad}`; si no, solo `{id}`. Solo disponible si Etiqueta está activo
+- **Vector**: controla la visibilidad del vector velocidad ($v$) o la flecha de desplazamiento ($\Delta x$). La visibilidad final es AND entre el toggle y la condición física ($v \neq 0$ o $\Delta x \neq 0$)
 
-El toggle no afecta la existencia del elemento en el diagrama, solo el contenido del texto de la etiqueta.
+El toggle **Valor** se deshabilita visualmente cuando **Etiqueta** está destildado para evitar estados inconsistentes.
 
 ### 5.4 Formato decimal
 
@@ -195,11 +206,15 @@ Notas sobre unidades:
 - $x_f = x_i$ (ambos ticks coinciden)
 - Un solo tick visible para $x_i = x_f$ (además del origen si $x_i \neq 0$)
 
-### 7.2 $x_i = 0$ o cerca del origen
+### 7.2 $x_i$ o $x_f$ cerca del origen
 
-- Móvil centrado sobre el tick del origen
-- Tick de $x_i$ = tick del origen (no hay tick separado)
-- Etiqueta $x_i$ va **sobre el cuadrado** (misma altura que $t$)
+Cuando $x_i$ o $x_f$ están a menos de 50px en pantalla del origen:
+
+- El elemento respectivo ($x_i$ o $x_f$) coloca su etiqueta **sobre el cuadrado** (misma altura que $t$), en vez de debajo del tick
+- Si $x_i$ está en el origen exacto:
+  - Móvil centrado sobre el tick del origen
+  - Tick de $x_i$ = tick del origen (no hay tick separado)
+- Si **ambos** $x_i$ y $x_f$ están elevados, $x_f$ se desplaza 18px más arriba que $x_i$ para evitar superposición
 
 ### 7.3 Cruce del origen ($x_i < 0 < x_f$ o $x_f < 0 < x_i$)
 
@@ -275,20 +290,54 @@ Cuando no hay suficientes inputs para resolver (menos de 3 campos numéricos lle
 
 ### 9.3 Generación del diagrama
 
-El diagrama se genera al presionar **"Generar Diagrama"**. También se regenera automáticamente cuando el usuario cambia una unidad de medida o un toggle de visibilidad.
+El formulario se divide en **dos cards** con borde redondeado (`border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem`), separadas por un gap de `1rem`.
 
-Un botón **"Calcular"** se habilita cuando exactamente 3 campos numéricos están llenos. Al presionarlo, el motor computa el campo faltante, lo auto-rellena y genera el diagrama.
+**Card 1 - "Datos del diagrama"**: inputs numéricos ($x_i$, $v$, $t$, $x_f$) con sus selectores de unidad. Un botón **"Calcular"** se habilita cuando exactamente 3 campos están llenos; al presionarlo, el motor computa el campo faltante, lo auto-rellena y genera el diagrama.
 
-Un botón **"Borrar datos"** debajo del formulario resetea todos los inputs, unidades y toggles a sus valores por defecto, y limpia el diagrama.
+**Card 2 - "Elementos del diagrama"**: tabla de controles con filas por elemento ($x_i$, $x_f$, $v$, $t$, $\Delta x$) y columnas: *Etiqueta*, *Valor*, *Vector*. Cada checkbox controla la visibilidad del respectivo aspecto en el diagrama. Los checkboxes tienen tamaño `1rem × 1rem`.
+
+Debajo de ambos cards, un botón **"Generar Diagrama"** genera o regenera el diagrama. También se regenera automáticamente cuando el usuario cambia una unidad de medida o cualquier checkbox de visualización.
+
+Dentro del contenedor del diagrama, un botón **"Exportar"** (alineado a la derecha junto al título "Vista previa") permite descargar el SVG.
+
+Un botón **"Borrar datos"** debajo del formulario resetea todos los inputs, unidades y controles a sus valores por defecto, y limpia el diagrama.
 
 ### 9.4 Arquitectura
 
+**Core:**
 - `src/core/units.ts` → tipos y funciones de conversión de unidades
 - `src/core/format.ts` → formateo de números (3 decimales, sin decimales si es entero)
 - `src/core/layout-engine.ts` → posicionamiento de todos los elementos
-- `src/modules/mru/scene-builder.ts` → construcción de nodos semánticos
 - `src/core/renderer.ts` → conversión de nodos posicionados a SVG
-- `src/app/engine.ts` → coordinador del pipeline
+
+**MRU Module:**
+- `src/modules/mru/scene-builder.ts` → construcción de nodos semánticos; usa `model.controls` para visibilidad de labels y vectores
+- `src/modules/mru/types.ts` → define `DiagramControls` y `ElementControls` para control granular de etiqueta/valor/vector por elemento
+
+**App:**
+- `src/app/engine.ts` → coordinador del pipeline, recibe `controls: DiagramControls` y lo propaga al modelo
+- `src/App.tsx` → layout principal con grid de 2 columnas (formulario 320px + diagrama 1fr)
+- `src/App.css` → estilos globales incluyendo cards, inputs, controles
+
+**UI Components:**
+- `src/ui/components/MRUForm.tsx` → formulario con dos cards (datos + elementos), botones Calcular/Generar/Borrar
+- `src/ui/components/DiagramView.tsx` → contenedor del diagrama con header (título + Exportar)
+- `src/ui/components/ExportButton.tsx` → botón de exportación SVG
+
+**Estilo visual:**
+- Fuente: **Inter** (Roboto como fallback), importada vía Google Fonts
+- Layout principal: CSS Grid `grid-template-columns: 320px 1fr`, gap `1rem`, padding `2rem`
+- Cards: `border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; background: white`, gap interno `0.5rem`
+- Separación entre cards y entre cards y botón: `1rem` (gap de `.mru-form`)
+- Inputs + select: CSS Grid `grid-template-columns: 1fr auto`, select con `appearance: none`, `width: 70px`, flecha SVG personalizada
+- Botón Calcular: `margin-top: 0.5rem` adicional respecto al último input
+- Checkboxes en tabla de controles: `1rem × 1rem`
+- Etiquetas de elementos: centradas con `text-align: center`
+- Contenedor del diagrama: sin altura fija, crece con el contenido SVG (`width: 100%; height: auto`)
+- Header del diagrama: `padding-top: 2rem; margin-bottom: 1.5rem`, título con `padding-left: 2rem`, botón Exportar con `margin-right: 2rem` para alinear bordes con el SVG
+- Estados vacío/error/loading del diagrama: `height: 250px`
+
+Los controles de visualización fluyen así: `App.tsx` → `engine.generate({controls})` → `module.infer()` → `MRUDiagramModel.controls` → `scene-builder.ts` que combina condiciones físicas (`showVelocityVector`, `hasDisplacement`) con los toggles del usuario para determinar visibilidad final de cada nodo.
 
 ### 9.5 Resolución de variable faltante
 

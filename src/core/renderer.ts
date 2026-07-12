@@ -21,7 +21,7 @@ function renderOrigin(node: PositionedNode): string {
 
   return `
     <line x1="${x}" y1="${y}" x2="${x}" y2="${y + tickLen}" stroke="black" stroke-width="1.5" />
-    <text x="${x}" y="${y + tickLen + 20}" font-family="sans-serif" font-size="13" fill="black" text-anchor="middle">${escapeXml(label)}</text>`;
+    <text x="${x}" y="${y + tickLen + 20}" font-family="Inter, Roboto, sans-serif" font-size="13" fill="black" text-anchor="middle">${escapeXml(label)}</text>`;
 }
 
 function renderPosition(node: PositionedNode): string {
@@ -90,7 +90,7 @@ function renderLabel(node: PositionedNode): string {
   if (originalNode.type !== 'label') return '';
 
   return `
-    <text x="${x}" y="${y}" font-family="sans-serif" font-size="14" fill="black" text-anchor="middle">${escapeXml(originalNode.text)}</text>`;
+    <text x="${x}" y="${y}" font-family="Inter, Roboto, sans-serif" font-size="14" fill="black" text-anchor="middle">${escapeXml(originalNode.text)}</text>`;
 }
 
 function escapeXml(str: string): string {

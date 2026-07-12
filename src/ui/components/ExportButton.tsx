@@ -19,7 +19,7 @@ export function ExportButton({ svg }: ExportButtonProps) {
 
   return (
     <button onClick={handleExport} disabled={!svg} className="export-button">
-      Exportar SVG
+      Exportar
     </button>
   );
 }

@@ -65,96 +65,99 @@ export function MRUForm({
 
   return (
     <form onSubmit={handleSubmit} className="mru-form">
-      <div className="form-field">
-        <label htmlFor="x0">Posición inicial</label>
-        <div className="input-with-unit">
-          <input
-            id="x0"
-            type="text"
-            value={values.x0}
-            onChange={(e) => onChange('x0', e.target.value)}
-            placeholder="xi"
-          />
-          <select
-            value={x0Unit}
-            onChange={(e) => onX0UnitChange(e.target.value as DistanceUnit)}
-          >
-            {DISTANCE_UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
+      <div className="card">
+        <h3>Datos del diagrama</h3>
+        <div className="form-field">
+          <label htmlFor="x0">Posición inicial</label>
+          <div className="input-with-unit">
+            <input
+              id="x0"
+              type="text"
+              value={values.x0}
+              onChange={(e) => onChange('x0', e.target.value)}
+              placeholder="xi"
+            />
+            <select
+              value={x0Unit}
+              onChange={(e) => onX0UnitChange(e.target.value as DistanceUnit)}
+            >
+              {DISTANCE_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        <div className="form-field">
+          <label htmlFor="v">Velocidad</label>
+          <div className="input-with-unit">
+            <input
+              id="v"
+              type="text"
+              value={values.v}
+              onChange={(e) => onChange('v', e.target.value)}
+              placeholder="v"
+            />
+            <select
+              value={velUnit}
+              onChange={(e) => onVelUnitChange(e.target.value as VelocityUnit)}
+            >
+              {VELOCITY_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="t">Tiempo</label>
+          <div className="input-with-unit">
+            <input
+              id="t"
+              type="text"
+              value={values.t}
+              onChange={(e) => onChange('t', e.target.value)}
+              placeholder="t"
+            />
+            <select
+              value={timeUnit}
+              onChange={(e) => onTimeUnitChange(e.target.value as TimeUnit)}
+            >
+              {TIME_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="xf">Posición final</label>
+          <div className="input-with-unit">
+            <input
+              id="xf"
+              type="text"
+              value={values.xf}
+              onChange={(e) => onChange('xf', e.target.value)}
+              placeholder="xf"
+            />
+            <select
+              value={xfUnit}
+              onChange={(e) => onXfUnitChange(e.target.value as DistanceUnit)}
+            >
+              {DISTANCE_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <button type="button" className="calculate-button" onClick={onCalculate} disabled={filledCount !== 3}>
+          Calcular
+        </button>
       </div>
 
-      <div className="form-field">
-        <label htmlFor="v">Velocidad</label>
-        <div className="input-with-unit">
-          <input
-            id="v"
-            type="text"
-            value={values.v}
-            onChange={(e) => onChange('v', e.target.value)}
-            placeholder="v"
-          />
-          <select
-            value={velUnit}
-            onChange={(e) => onVelUnitChange(e.target.value as VelocityUnit)}
-          >
-            {VELOCITY_UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="form-field">
-        <label htmlFor="t">Tiempo</label>
-        <div className="input-with-unit">
-          <input
-            id="t"
-            type="text"
-            value={values.t}
-            onChange={(e) => onChange('t', e.target.value)}
-            placeholder="t"
-          />
-          <select
-            value={timeUnit}
-            onChange={(e) => onTimeUnitChange(e.target.value as TimeUnit)}
-          >
-            {TIME_UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="form-field">
-        <label htmlFor="xf">Posición final</label>
-        <div className="input-with-unit">
-          <input
-            id="xf"
-            type="text"
-            value={values.xf}
-            onChange={(e) => onChange('xf', e.target.value)}
-            placeholder="xf"
-          />
-          <select
-            value={xfUnit}
-            onChange={(e) => onXfUnitChange(e.target.value as DistanceUnit)}
-          >
-            {DISTANCE_UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <button type="button" className="calculate-button" onClick={onCalculate} disabled={filledCount !== 3}>
-        Calcular
-      </button>
-
-      <div className="controls-section">
-        <h3>Visualización</h3>
+      <div className="card">
+        <h3>Elementos del diagrama</h3>
         <div className="controls-table">
           <div className="controls-row controls-header">
             <span className="controls-cell element-label">Elemento</span>

@@ -4,7 +4,6 @@ import { PhysicsDiagramEngine } from './app/engine.ts';
 import { MRUModule } from './modules/mru/index.ts';
 import { MRUForm } from './ui/components/MRUForm.tsx';
 import { DiagramView } from './ui/components/DiagramView.tsx';
-import { ExportButton } from './ui/components/ExportButton.tsx';
 import { formatValue } from './core/format.ts';
 import type { PipelineResult } from './core/types.ts';
 import type { DistanceUnit, TimeUnit, VelocityUnit } from './core/units.ts';
@@ -156,16 +155,12 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Physics Diagram Engine</h1>
-        <p className="subtitle">Generador automático de diagramas de Física</p>
+        <h1>Generador de Diagramas</h1>
+        <p className="subtitle">Generador de diagramas de Física</p>
       </header>
 
       <main className="app-main">
         <section className="input-section">
-          <h2>Movimiento Rectilíneo Uniforme</h2>
-          <p className="input-description">
-            Ingresa los valores del problema. Completa al menos 3 campos para resolver.
-          </p>
           <MRUForm
             values={{ x0, v, t, xf }}
             onChange={handleChange}
@@ -188,10 +183,6 @@ function App() {
         </section>
 
         <section className="diagram-section">
-          <div className="diagram-toolbar">
-            <h2>Diagrama</h2>
-            <ExportButton svg={svg} />
-          </div>
           <DiagramView svg={svg} error={error} errorDetail={errorDetail} />
         </section>
       </main>
