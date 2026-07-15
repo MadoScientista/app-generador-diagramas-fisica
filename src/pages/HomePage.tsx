@@ -9,6 +9,10 @@ export function HomePage() {
           <h3>MRU</h3>
           <p>Movimiento Rectilineo Uniforme</p>
         </Link>
+        <Link to="/generador/mru-v2" className="generator-card">
+          <h3>MRU v2</h3>
+          <p>Movimiento Rectilineo Uniforme (v2)</p>
+        </Link>
       </div>
     </div>
   );

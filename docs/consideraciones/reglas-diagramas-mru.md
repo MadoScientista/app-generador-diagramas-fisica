@@ -1,3 +1,7 @@
+# Reglas generales
+
+Se debe respetar la filosofía de React de componentes reutilizables
+
 # Reglas de diagramas MRU
 
 Basado en los diagramas de referencia en `docs/diagramas-referencia/`.
